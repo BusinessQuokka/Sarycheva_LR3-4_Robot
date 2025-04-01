@@ -1,73 +1,91 @@
 #include "Sarycheva_LR3-4_Robot.h"
 #include <numeric>
 #include <cmath>
-
-
+#include <limits>
+#include <iomanip>
 using namespace std;
 
-Robot::Robot() : deg(0), koef({}) {}
+//переопределение оператора вывода на консоль
+ostream& operator<<(ostream& mystream, const Robot& obj)
+{
+    bool firstTerm = true; // Флаг для первого члена полинома
 
-Robot::Robot(unsigned k) : deg(k), koef(vector<double>(k, 0.0)) {}
+    for (size_t i = 0; i <= obj.deg; i++) {
+        double coeff = obj.koef[i];
 
-Robot::Robot(unsigned k, vector<double> mas) : deg(k) {
-    if (k <= mas.size()) {
-        koef.resize(k);
-        koef.assign(mas.begin(), mas.begin() + k);
-    } else {
-        cerr << "Error: Degree exceeds coefficients count." << endl;
-    }
-}
+        // Пропускаем нулевые коэффициенты
+        if (abs(coeff) < 1e-10) continue;
 
-Robot::Robot(const Robot& ob) : deg(ob.deg), koef(ob.koef) {}
+        // Выводим знак коэффициента
+        if (!firstTerm) mystream << (coeff > 0 ? " + " : " - ");
+        else {
+            if (coeff < 0) mystream << "-";
+            firstTerm = false;
+        }
 
-double Robot::CalculateValue(double x) const {
-    double result = 0.0;
-    for (int i = 0; i < deg; ++i) {
-        result += koef[i] * pow(x, i);
-    }
-   // cout << "Value at x = " << x << ": " << result << endl; Закомментировано
-    return result; // возвращаем результат
-}
+        // Выводим коэффициент (без знака)
+        double absCoeff = abs(coeff);
 
-Robot Robot::operator+(const Robot& other) const {
-    unsigned maxDeg = max(deg, other.deg);
-    vector<double> resultKoef(maxDeg, 0.0);
-
-    for (int i = 0; i < deg; ++i) {
-        resultKoef[i] += koef[i];
-    }
-
-    for (int i = 0; i < other.deg; ++i) {
-        resultKoef[i] += other.koef[i];
+        if (absCoeff != 1.0 || i == 0) { // Выводим 1 только если это не x^0
+            mystream << fixed << setprecision(2) << absCoeff;
+        }
+        else if (absCoeff == 1 && i==0)
+            mystream << "1";
+        
+        // Выводим переменную x и степень
+        if (i < obj.deg) {
+            mystream << "x";
+            if (i > 0) mystream << "^" << i;
+        }
     }
 
-    return Robot(maxDeg, resultKoef);
-}
-
-const Robot& Robot::operator=(const Robot& other) {
-    if (this == &other) return *this;
-    deg = other.deg;
-    koef = other.koef;
-    return *this;
-}
-
-ostream& operator<<(ostream& mystream, const Robot& obj) {
-    mystream << "Degree: " << obj.deg << endl;
-    mystream << "Coefficients: ";
-    for (double k : obj.koef) {
-        mystream << k << " ";
-    }
+    // Если все коэффициенты нулевые
+    if (firstTerm) mystream << "0";
     mystream << endl;
     return mystream;
 }
 
-istream& operator>>(istream& mystream, Robot& obj) {
-    cout << "Enter degree: ";
-    mystream >> obj.deg;
-    obj.koef.resize(obj.deg);
-    cout << "Enter coefficients: ";
-    for (int i = 0; i < obj.deg; ++i) {
-        mystream >> obj.koef[i];
+//переопределение оператора ввода с консоли
+istream& operator>>(istream& mystream, Robot& obj)
+{
+    string st;
+    cout << "Enter Degree: ";
+    getline(mystream, st);
+    try {
+        obj.deg = stoi(st);
+        if (obj.deg < 0) {
+            throw std::invalid_argument("Degree must be non-negative");
+        }
     }
+    catch (const std::invalid_argument& e) {
+        cerr << "Invalid input for degree. Please enter a non-negative integer." << endl;
+        mystream.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        return mystream; // Вернуться, чтобы избежать дальнейших ошибок
+    }
+    catch (const std::out_of_range& e) {
+        cerr << "Degree is too large. Please enter a smaller number." << endl;
+        mystream.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        return mystream;
+    }
+
+    obj.koef.resize(obj.deg + 1);
+    cout << "Enter coefficients (separated by spaces): ";
+    for (int i = 0; i <= obj.deg; ++i) {
+        try {
+            getline(mystream >> std::ws, st); 
+            obj.koef[i] = stod(st);
+        }
+        catch (const std::invalid_argument& e) {
+            cerr << "Invalid input for coefficient at index " << i << ". Please enter a number." << endl;
+            obj.koef.clear();  
+            return mystream;
+        }
+        catch (const std::out_of_range& e) {
+            cerr << "Coefficient is too large/small at index " << i << ". Please enter a smaller number." << endl;
+            obj.koef.clear(); 
+            return mystream;
+        }
+    }
+     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     return mystream;
 }

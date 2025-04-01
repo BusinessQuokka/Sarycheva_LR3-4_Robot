@@ -12,30 +12,25 @@ class Robot
     unsigned deg {0};
     vector <double> koef;
     public:
-
+    void setKoefElement(unsigned index, double value);
     Robot();
     Robot(unsigned k);
     Robot(unsigned k, vector<double> mas);
     Robot(const Robot &ob);
-
+    
     ~Robot()
     {   }
 
 
 //set-методы
 
-
-    void setRobot(unsigned k, const vector<double>& mas) {
-        if (k<= mas.size()) {
-            deg = k;
-            koef.resize(k);
-            koef.assign(mas.begin(), mas.begin() + k);
-
-        } else {
-            cerr << "Error: Degree exceeds coefficients count." << endl;
-        }
+void Robot::setKoefElement(unsigned index, double value) {
+    if (index < koef.size()) {
+        koef[index] = value;
+    } else {
+        std::cerr << "Error: Index out of bounds in setKoefElement" << std::endl;
     }
-
+}
 void setDegree(unsigned k) {deg = k;};
 
 

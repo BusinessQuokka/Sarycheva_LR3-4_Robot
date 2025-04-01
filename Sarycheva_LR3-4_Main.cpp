@@ -16,14 +16,14 @@ int main() {
 
     // Создание меню с использованием std::map
     map<int, MenuItem> menu = {
-        {1, {"Create Robot Constructor default", createPolDefault}},
-        {2, {"Create Robot Constructor with degree", createPolDeg}},
-        {3, {"Create Robot Constructor with degree & coefficients", createPolDegCoeff}},
-        {4, {"Create Robot with consol", createPolCons}},
-        {5, {"Show array of Robot",  []() { showArrayPol(vectorOfAllRobots); }}},
-        {6, {"Calculate value of Robot", calcvalPol}},
-        {7, {"Add of Robots", addPolynoms}},
-        {8, {"Sum of array the Robots", sumArrPolynoms}}
+        {1, {"Create Robot Constructor default", createRobDefault}},
+        {2, {"Create Robot Constructor with degree", createRobDeg}},
+        {3, {"Create Robot Constructor with degree & coefficients", createRobDegCoeff}},
+        {4, {"Create Robot with consol", createRobCons}},
+        {5, {"Show array of Robot",  []() { showArrayRob(vectorOfAllRobots); }}},
+        {6, {"Calculate value of Robot", calcvalRob}},
+        {7, {"Add of Robots", addRobots}},
+        {8, {"Sum of array the Robots", sumArrRobots}}
     };
 
     unsigned choice = 0; // Переменная для хранения выбора пользователя
