@@ -1,5 +1,5 @@
-#ifndef _ROBOT_H
-#define _ROBOT_H
+#ifndef ROBOT_H
+#define ROBOT_H
 
 #include <iostream>
 #include <string>
@@ -46,24 +46,15 @@ unsigned getDegree() const { return deg; };
 
 const vector<double> getKoef() const { return koef;}
 
-void CalculateValue(double x); 
+double CalculateValue(double x) const;
 
 Robot operator+(const Robot& other) const;
 
-const Robot& operator = (const Polynom& other)
-
-{
-
-if (&other == this) return *this;
-deg = other.deg;
-koef = other.koef;
-return *this;
-
-}
+const Robot& operator = (const Robot& other);
 
 friend ostream& operator<<(ostream& mystream, const Robot &obj);
 friend istream& operator>>(istream& mystream, Robot &obj);
 
 };
 
-endif //_ROBOT_H
+#endif //ROBOT_H

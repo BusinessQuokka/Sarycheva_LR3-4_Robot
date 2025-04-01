@@ -1,85 +1,73 @@
-#include <ctime>
-#include <C:\\Users\\pc\\OneDrive\\Documenti\\Sarycheva_LR3-4_Robot\\Sarycheva_LR3-3_Methods.h>
+#include "Sarycheva_LR3-4_Robot.h"
+#include <numeric>
+#include <cmath>
+
 
 using namespace std;
 
-int main()
-{
+Robot::Robot() : deg(0), koef({}) {}
 
-//генерация начального случайного значения
+Robot::Robot(unsigned k) : deg(k), koef(vector<double>(k, 0.0)) {}
 
-srand(time(NULL));
-
-// Создание меню с использованием std::map
-
-map<int, MenuItem> menu = {
-
-{1, {"Create Polynom Constructor default", createPolDefault}},
-
-{2, {"Create Polynom Constructor with degree", createPolDeg}},
-
-{3, {"Create Polynom Constructor with degree & coefficients", createPol DegCoeff}},
-
-{4, {"Create Polynom with consol", createPolCons}},
-
-{5, {"Show array of Polynom", showArrayPol (vectorOfAllPolynoms)}},
-
-{6, {"Calculate value of Polynom", calcvalPol}},
-
-{7, {"Add of Polynoms", addPolynoms}},
-
-{8, {"Sum of array the Polynoms", sumArrPolynoms}},
-
-};
-
-unsigned choiсе = 0; // Переменная для хранения выбора пользователя
-
-// Основной цикл программ
-
-//while (true) {
-
-cout << "Меню: " << endl;
-
-// Вывод всех пунктов меню
-
-for (const auto& item menu) {
-
-cout << "Task " << item.first << "." << item.second.title << endl;
+Robot::Robot(unsigned k, vector<double> mas) : deg(k) {
+    if (k <= mas.size()) {
+        koef.resize(k);
+        koef.assign(mas.begin(), mas.begin() + k);
+    } else {
+        cerr << "Error: Degree exceeds coefficients count." << endl;
+    }
 }
-cout << "0. Выход" << endl; // Пункт для выхода из программы
 
+Robot::Robot(const Robot& ob) : deg(ob.deg), koef(ob.koef) {}
 
-    while (true) {
+double Robot::CalculateValue(double x) const {
+    double result = 0.0;
+    for (int i = 0; i < deg; ++i) {
+        result += koef[i] * pow(x, i);
+    }
+   // cout << "Value at x = " << x << ": " << result << endl; Закомментировано
+    return result; // возвращаем результат
+}
 
-        EnterNumber (choice, "Введите номер пункта: ")();
-        
-        // Выход из программы, если выбран пункт 0
-        
-        if (choice == 0) {
-        
-        cout << "© 2025 FirstName LastName" << endl;
-        
-        break;
-        }
-        cout << endl <<"=========Action:=============" << endl;
-        
-        //cout << endl;
-        
-        // Проверка, существует ли выбранный пункт меню
-        
-        if (menu.find(choice) != menu.end()) {
-        
-        menu [choice].action(); // Выполнение действия, связанного с пунктом меню 
-        } else {
-        
-        cout << "Некорректный ввод."; // Сообщение об ошибке, если пункт не найден
-        
-        }
-        
-        cout << endl; // отступ для красоты
-        
-        }
-        
-        return 0; // Завершение программы
+Robot Robot::operator+(const Robot& other) const {
+    unsigned maxDeg = max(deg, other.deg);
+    vector<double> resultKoef(maxDeg, 0.0);
 
+    for (int i = 0; i < deg; ++i) {
+        resultKoef[i] += koef[i];
+    }
+
+    for (int i = 0; i < other.deg; ++i) {
+        resultKoef[i] += other.koef[i];
+    }
+
+    return Robot(maxDeg, resultKoef);
+}
+
+const Robot& Robot::operator=(const Robot& other) {
+    if (this == &other) return *this;
+    deg = other.deg;
+    koef = other.koef;
+    return *this;
+}
+
+ostream& operator<<(ostream& mystream, const Robot& obj) {
+    mystream << "Degree: " << obj.deg << endl;
+    mystream << "Coefficients: ";
+    for (double k : obj.koef) {
+        mystream << k << " ";
+    }
+    mystream << endl;
+    return mystream;
+}
+
+istream& operator>>(istream& mystream, Robot& obj) {
+    cout << "Enter degree: ";
+    mystream >> obj.deg;
+    obj.koef.resize(obj.deg);
+    cout << "Enter coefficients: ";
+    for (int i = 0; i < obj.deg; ++i) {
+        mystream >> obj.koef[i];
+    }
+    return mystream;
 }
