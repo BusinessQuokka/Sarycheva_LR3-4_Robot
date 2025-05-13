@@ -4,52 +4,55 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <numeric>  // Для std::accumulate
+#include <algorithm> // Для std::sort, std::generate
+#include <iomanip>   // Для std::setprecision
+#include <random>    // Для генерации случайных чисел
+#include <functional> //Для std::function
 
 using namespace std;
 
-class Robot
-{
-    unsigned deg {0};
-    vector <double> koef;
-    public:
-    void setKoefElement(unsigned index, double value);
+class Robot {
+private:
+    string model;
+    string functionality;
+    vector<double> prices;
+    unsigned int robot_id;
+    static unsigned int next_robot_id;
+
+public:
+    // Constructors
     Robot();
-    Robot(unsigned k);
-    Robot(unsigned k, vector<double> mas);
-    Robot(const Robot &ob);
-    
-    ~Robot()
-    {   }
+    Robot(const string& model, const string& functionality, const vector<double>& prices);
+    Robot(const Robot& other);
+    Robot(unsigned int num_prices);
+    Robot(const string& model_name);
+    ~Robot();
 
+    // Get methods
+    string getModel() const;
+    string getFunctionality() const;
+    vector<double> getPrices() const;
+    unsigned int getRobotId() const;
 
-//set-методы
+    // Set methods
+    void setModel(const string& model);
+    void setFunctionality(const string& functionality);
+    void setPrices(const vector<double>& prices);
 
-void Robot::setKoefElement(unsigned index, double value) {
-    if (index < koef.size()) {
-        koef[index] = value;
-    } else {
-        std::cerr << "Error: Index out of bounds in setKoefElement" << std::endl;
-    }
-}
-void setDegree(unsigned k) {deg = k;};
+    // Method to calculate the average price
+    double calculateAveragePrice() const;
 
+    // Overloaded operators
+    bool operator<(const Robot& other) const;
+    Robot operator+(const Robot& other) const;
+    Robot operator++(int);
+    Robot& operator++();
+    Robot& operator=(const Robot& other);
 
-//get-методы
-
-
-unsigned getDegree() const { return deg; };
-
-const vector<double> getKoef() const { return koef;}
-
-double CalculateValue(double x) const;
-
-Robot operator+(const Robot& other) const;
-
-const Robot& operator = (const Robot& other);
-
-friend ostream& operator<<(ostream& mystream, const Robot &obj);
-friend istream& operator>>(istream& mystream, Robot &obj);
-
+    friend ostream& operator<<(ostream& os, const Robot& robot);
+    friend istream& operator>>(istream& is, Robot& robot);
 };
 
-#endif //ROBOT_H
+
+#endif // _ROBOT_H

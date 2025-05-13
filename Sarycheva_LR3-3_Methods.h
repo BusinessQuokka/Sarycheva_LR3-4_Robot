@@ -9,235 +9,198 @@
 #include <functional>
 #include <algorithm>
 #include "Sarycheva_LR3-4_Robot.h"
+#include "Sarycheva_LR3-4_Robot.cpp"
 
 using namespace std;
 
+//глобальный массив роботов
+vector<Robot> vectorOfAllRobots;
 
-namespace RobotMethods {
+//Функции, связанные с меню (создание, отображение, редактирование и т.д.)
+// Структура для описания пункта меню
+struct MenuItem {
+    string title;            // Название пункта меню
+    function<void()> action; // Действие, выполняемое при выборе пункта
+};
 
-    // Глобальный вектор объектов Robot
-    extern std::vector<Robot> vectorOfAllRobots;
+//Вспомогательная функция для ввода целых чисел
+function<void()> EnterNumber(unsigned& varLink, string label) {
+    return[&varLink, label]() {
+        string raw_input;
+        cout << label << " = ";
+        getline(cin, raw_input);
 
-    // Структура для пунктов меню
-    struct MenuItem {
-        std::string title;
-        std::function<void()> action;
+        while (!UserInput(raw_input)) {
+            cout << label << " = ";
+            getline(cin, raw_input);
+        }
+        varLink = stoi(raw_input);
     };
+}
 
-    // Вспомогательные функции
-    unsigned min(unsigned n, unsigned m) {
-        return (n < m) ? n : m;
+//вспомогательная функция для ввода строк
+function<void()> EnterString(string& varLink, string label) {
+    return[&varLink, label]() {
+        cout << label << " = ";
+        getline(cin, varLink);
+    };
+}
+
+//функция проверки корректности вводимых данных
+bool UserInput(string input) {
+    //если строка пустая - ввод некорректен
+    if (input.empty()) return false;
+    //попытаться
+    try {
+        //преобразование введенного значения в тип int
+        int number = stoi(input);
+        if (number < 0) return false;
     }
-    unsigned max(unsigned n, unsigned m) {
-        return (n > m) ? n : m;
+    catch (...)//если возникла ошибка в блоке try
+    {
+        return false;
+    }
+    return true;
+}
+
+void createRobDefault() {
+    Robot f, g;
+    //добавление созданных объектов в глобальный массив
+    vectorOfAllRobots.push_back(f);
+    vectorOfAllRobots.push_back(g);
+    //вывод созданных роботов
+    cout << " f(x)= " << f << endl;
+    cout << " g(x)= " << g << endl;
+}
+
+void createRobDeg() {
+    unsigned deg;
+    EnterNumber(deg, "Input number of prices for robot: ")();
+
+    //использование конструктора преобразования
+    Robot robot1{ deg };
+    //добавление созданного объекта в глобальный массив
+    vectorOfAllRobots.push_back(robot1);
+
+    cout << endl << "robot1: " << endl;
+    cout << robot1;
+}
+void createRobDegCoeff() {
+    // Создание робота с заданными параметрами
+    string model;
+    string functionality;
+    vector<double> prices;
+
+    cout << "Введите модель робота: ";
+    cin >> ws; // Очистка буфера
+    getline(cin, model);
+
+    cout << "Введите функциональность робота: ";
+    getline(cin, functionality);
+
+    int numPrices;
+    cout << "Введите количество цен: ";
+    cin >> numPrices;
+
+    prices.resize(numPrices);
+    cout << "Введите цены (через пробел): ";
+    for (int i = 0; i < numPrices; ++i) {
+        cin >> prices[i];
     }
 
-    // Функция проверки корректности вводимых данных (для целых чисел)
-    bool isValidNumber(const std::string& str) {
-        if (str.empty()) return false;
-        try {
-            int number = stoi(str);
-            if (number < 0) return false;
+    Robot robot(model, functionality, prices);
+    vectorOfAllRobots.push_back(robot);
+
+    cout << robot;
+}
+
+void createRobCons() {
+    Robot f;
+    //ввод робота с консоли
+    cin >> f;
+    //добавление созданного объекта в глобальный массив
+    vectorOfAllRobots.push_back(f);
+    //вывод созданного робота
+    cout << " f(x)= ";
+    cout << f;
+}
+
+function<void()> showArrayRob(vector<Robot>& v) {
+    return[&v]() {
+        if (v.size() > 0) {
+            cout << "\n======= The list of Robots ========\n";
+            for (auto it = v.begin(); it != v.end(); it++)
+                cout << (it - v.begin()) << ") " << *it << endl;
+            cout << "====================================\n";
         }
-        catch (...) {
-            return false;
-        }
-        return true;
-    }
+        else
+            cerr << "Errror, list of Robots is empty\n";
+    };
+}
 
-    // Ввод числа с контролем корректности
-    template <typename T>
-    std::function<void()> EnterNumber(T& varLink, const std::string& prompt) {
-        return [&varLink, prompt]() {
-            std::string raw_input;
-            std::cout << prompt;
-            std::getline(std::cin >> std::ws, raw_input);
-
-            while (!isValidNumber(raw_input)) {
-                std::cout << "Некорректный ввод. Пожалуйста, введите целое неотрицательное число: ";
-                std::getline(std::cin >> std::ws, raw_input);
-            }
-            varLink = std::stoi(raw_input);
-        };
-    }
-
-    // Ввод строки
-    std::function<void()> EnterString(std::string& varLink, const std::string& prompt) {
-        return [&varLink, prompt]() {
-            std::cout << prompt;
-            std::getline(std::cin >> std::ws, varLink);
-        };
-    }
-
-    // Создание Robot по умолчанию
-    void createRobDefault() {
-        Robot rob;
-        vectorOfAllRobots.push_back(rob);
-        std::cout << "Robot по умолчанию создан." << std::endl;
-    }
-
-    // Создание Robot с указанием степени
-    void createRobDeg() {
-        unsigned deg = 0;
-        EnterNumber(deg, "Введите степень Robot: ")();
-        Robot rob(deg);
-        vectorOfAllRobots.push_back(rob);
-        std::cout << "Robot со степенью " << deg << " создан." << std::endl;
-    }
-
-    // Создание Robot с указанием степени и коэффициентов
-    void createRobDegCoeff() {
-        unsigned k = 0;
-        EnterNumber(k, "Введите степень Robot: ")();
-        std::vector<double> coeffs(k);
-        std::cout << "Введите коэффициенты (через пробел): ";
-        for (int i = 0; i < k; ++i) {
-            double coeff;
-            EnterNumber(coeff, "")();
-            coeffs[i] = coeff;
-        }
-        Robot rob(k, coeffs);
-        vectorOfAllRobots.push_back(rob);
-        std::cout << "Robot со степенью " << k << " и коэффициентами создан." << std::endl;
-    }
-
-    // Создание Robot с вводом с консоли
-    void createRobCons() {
-        Robot rob;
-        std::cout << "Введите данные Robot:" << std::endl;
-        std::cin >> rob;
-        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // очистка буфера
-        vectorOfAllRobots.push_back(rob);
-        std::cout << "Robot создан с вводом с консоли." << std::endl;
-    }
-
-    // Вывод массива Robot
-    void showArrayRob(const std::vector<Robot>& robots) {
-        if (robots.empty()) {
-            std::cout << "Массив Robot пуст." << std::endl;
-            return;
-        }
-        std::cout << "Массив Robot:" << std::endl;
-        for (size_t i = 0; i < robots.size(); ++i) {
-            std::cout << "Robot [" << i << "]:" << std::endl << robots[i];
-        }
-    }
-
-    // Вычисление значения Robot в точке x
-    void calcvalRob() {
-        if (vectorOfAllRobots.empty()) {
-            std::cout << "Массив Robot пуст. Сначала создайте Robot." << std::endl;
-            return;
-        }
-        double x = 0;
-        EnterNumber(x, "Введите значение x: ")();
-        std::cout << "Результат вычисления: " << vectorOfAllRobots[0].CalculateValue(x) << std::endl; // Используем первый Robot
-    }
-
-    // Сложение Robot
-    void addRobots() {
-        if (vectorOfAllRobots.size() < 2) {
-            std::cout << "Нужно как минимум два Robot для сложения." << std::endl;
-            return;
-        }
-
+void calcValRob() {
+    if (vectorOfAllRobots.size() > 0) {
+        //вывод списка роботов
         cout << "\n======= The list of Robots ========\n";
         for (auto it = vectorOfAllRobots.begin(); it != vectorOfAllRobots.end(); it++)
             cout << (it - vectorOfAllRobots.begin()) << ") " << *it << endl;
         cout << "====================================\n";
 
-        // ввод номера 1-го полинома для сложения
+        //ввод номера робота для вычислений
+        unsigned number = 0;
+        EnterNumber(number, "Input number of robot for calculation: ")();
+        //try {
+        //vectorOfAllRobots[number].CalculateValue(stod(st));
+        cout << vectorOfAllRobots[number].calculateAveragePrice() << endl;
+        //}
+        //catch (...) {
+        //cerr << "Errror, value x is not digit!\n";
+        //}
+    }
+    else
+        cerr << "Errror, list of Robots is empty\n";
+}
+
+void addRobots() {
+    if (vectorOfAllRobots.size() > 0) {
+        //вывод списка роботов
+        cout << "\n======= The list of Robots ========\n";
+        for (auto it = vectorOfAllRobots.begin(); it != vectorOfAllRobots.end(); it++)
+            cout << (it - vectorOfAllRobots.begin()) << ") " << *it << endl;
+        cout << "====================================\n";
+
+        //ввод номера 1-го робота для сложения
         unsigned number1 = 0, number2 = 0;
-        EnterNumber(number1, "Введите номер 1-го Robot для сложения: ")();
-        EnterNumber(number2, "Введите номер 2-го Robot для сложения: ")();
-
-        if (number1 >= vectorOfAllRobots.size() || number2 >= vectorOfAllRobots.size()) {
-            cout << "Ошибка: некорректные номера Robot." << endl;
-            return;
-        }
-
-        cout << "Result of addition Robots\n";
+        EnterNumber(number1, "Input number 1 robot for add: ")();
+        EnterNumber(number2, "Input number 2 robot for add: ")();
+        cout << "Result of addition Polynoms\n";
         Robot rez = vectorOfAllRobots[number1] + vectorOfAllRobots[number2];
-        cout << "Robot " << number1 << ": " << vectorOfAllRobots[number1] << endl;
-        cout << "Robot " << number2 << ": " << vectorOfAllRobots[number2] << endl;
-        cout << "Sum: " << rez;
+        cout << rez;
+        cout << endl;
+        // демонстрация работы конструктора преобразования
+        Robot rez1 = vectorOfAllRobots[number1] + "10";
+        cout << rez1;
         cout << endl;
     }
+    else
+        cerr << "Errror, list of Robots is empty\n";
+}
 
-    // Сумма массива Robot
-    void sumArrRobots() {
-        //ввод количества элементов массива роботов
-        unsigned count = 0;
-        EnterNumber(count, "Введите количество Robot в массиве: ")();
-
-        if (count == 0) {
-            std::cout << "Массив Robot пуст." << std::endl;
-            return;
-        }
-
-        std::vector<Robot> VectorRob(count);
-
-           // Ввод первого робота до цикла
-    unsigned degree;
-    EnterNumber(degree, "Введите степень Robot 1: ");
-    VectorRob[0].setDegree(degree);
- 
-
-    std::cout << "Введите коэффициенты (через пробел) для Robot 1: " << std::endl;
-    for (int j = 0; j <= degree; ++j) {
-        double num = 0;
-        EnterNumber(num, "");
-
-        // Проверка на корректность ввода
-        if (std::cin.fail()) {
-            std::cerr << "Ошибка ввода. Пожалуйста, введите число." << std::endl;
-            std::cin.clear();  // Сброс флагов ошибки
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // Очистка буфера ввода
-            --j; // Повторить ввод для этого коэффициента
-        } else {
-            VectorRob[0].setKoefElement(j, num);
-        }
+void sumArrRobots() {
+    //ввод количества элементов массива роботов
+    unsigned count = 0;
+    EnterNumber(count, "Input number of robots in array: ")();
+    vector<Robot> VectrRob;
+    for (size_t i = 0; i < count; ++i) {
+        Robot v; // Создаем объект с помощью конструктора по умолчанию
+        VectrRob.push_back(v);
     }
+    showArrayRob(VectrRob)();
+    //вычисление суммы 3-х роботов
+    //Robot sum(VectrRob[0]);
+    //for (size_t i = 1; i < count; i++) sum = sum + VectrRob[i];
+    //вывод робота - результата суммирования
+    //cout << "Summa: " << sum << endl;
+}
 
-    for (int i = 1; i < count; i++) {
-        EnterNumber(degree, "Введите степень Robot " + std::to_string(i + 1) + ": ");
-        VectorRob[i].setDegree(degree);
-
-
-        std::cout << "Введите коэффициенты для Robot " + std::to_string(i + 1) + ": " << std::endl;
-        for (int j = 0; j <= degree; ++j) {
-            double num = 0;
-            EnterNumber(num, "");
-
-            // Проверка на корректность ввода
-            if (std::cin.fail()) {
-                std::cerr << "Ошибка ввода. Пожалуйста, введите число." << std::endl;
-                std::cin.clear();  // Сброс флагов ошибки
-                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // Очистка буфера ввода
-                --j; // Повторить ввод для этого коэффициента
-            } else {
-                VectorRob[i].setKoefElement(j, num);
-            }
-        }
-    }
-                 
-
-       showArrayRob(VectorRob);
-
-        Robot sum = VectorRob[0];  // инициализируем сумму первым роботом
-            for (int i = 1; i < count; i++) {
-                sum = sum + VectorRob[i];
-            }
-
-        std::cout << "Summa: " << sum << std::endl;
-    }
-
-       std::vector<Robot> getSortedRobotsByPrice(std::vector<Robot> robots) {
-        std::sort(robots.begin(), robots.end(), [](const Robot& a, const Robot& b) {
-            return a.CalculateValue(1.0) < b.CalculateValue(1.0);
-        });
-        return robots;
-    }
-} 
-
-#endif
+#endif // _METHODS_H

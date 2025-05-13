@@ -1,91 +1,125 @@
 #include "Sarycheva_LR3-4_Robot.h"
-#include <numeric>
-#include <cmath>
-#include <limits>
-#include <iomanip>
-using namespace std;
+#include <iostream>
+#include <string>
+#include <vector>
+#include <numeric>  // Для std::accumulate
+#include <algorithm> // Для std::sort, std::generate
+#include <iomanip>   // Для std::setprecision
+#include <random>    // Для генерации случайных чисел
+#include <functional> //Для std::function
 
-//переопределение оператора вывода на консоль
-ostream& operator<<(ostream& mystream, const Robot& obj)
-{
-    bool firstTerm = true; // Флаг для первого члена полинома
+// Инициализация статического члена
+unsigned int Robot::next_robot_id = 0;
 
-    for (size_t i = 0; i <= obj.deg; i++) {
-        double coeff = obj.koef[i];
+Robot::Robot() : model(""), functionality(""), robot_id(next_robot_id++) {}
 
-        // Пропускаем нулевые коэффициенты
-        if (abs(coeff) < 1e-10) continue;
+Robot::Robot(const string& model, const string& functionality, const vector<double>& prices)
+    : model(model), functionality(functionality), prices(prices), robot_id(next_robot_id++) {}
 
-        // Выводим знак коэффициента
-        if (!firstTerm) mystream << (coeff > 0 ? " + " : " - ");
-        else {
-            if (coeff < 0) mystream << "-";
-            firstTerm = false;
-        }
+Robot::Robot(const Robot& other)
+    : model(other.model), functionality(other.functionality), prices(other.prices), robot_id(next_robot_id++) {}
 
-        // Выводим коэффициент (без знака)
-        double absCoeff = abs(coeff);
-
-        if (absCoeff != 1.0 || i == 0) { // Выводим 1 только если это не x^0
-            mystream << fixed << setprecision(2) << absCoeff;
-        }
-        else if (absCoeff == 1 && i==0)
-            mystream << "1";
-        
-        // Выводим переменную x и степень
-        if (i < obj.deg) {
-            mystream << "x";
-            if (i > 0) mystream << "^" << i;
+Robot::Robot(unsigned int num_prices) : Robot() {
+    if (num_prices > 0) {
+        prices.resize(num_prices);
+        //Заполняем prices случайными значениями
+        random_device rd;
+        mt19937 gen(rd());
+        uniform_real_distribution<> distrib(100.0, 1000.0); //диапазон цен
+        for (size_t i = 0; i < num_prices; ++i) {
+            prices[i] = distrib(gen);
         }
     }
-
-    // Если все коэффициенты нулевые
-    if (firstTerm) mystream << "0";
-    mystream << endl;
-    return mystream;
 }
 
-//переопределение оператора ввода с консоли
-istream& operator>>(istream& mystream, Robot& obj)
-{
-    string st;
-    cout << "Enter Degree: ";
-    getline(mystream, st);
-    try {
-        obj.deg = stoi(st);
-        if (obj.deg < 0) {
-            throw std::invalid_argument("Degree must be non-negative");
-        }
-    }
-    catch (const std::invalid_argument& e) {
-        cerr << "Invalid input for degree. Please enter a non-negative integer." << endl;
-        mystream.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        return mystream; // Вернуться, чтобы избежать дальнейших ошибок
-    }
-    catch (const std::out_of_range& e) {
-        cerr << "Degree is too large. Please enter a smaller number." << endl;
-        mystream.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        return mystream;
-    }
+Robot::Robot(const string& model_name) : Robot() {
+    model = model_name;
+}
 
-    obj.koef.resize(obj.deg + 1);
-    cout << "Enter coefficients (separated by spaces): ";
-    for (int i = 0; i <= obj.deg; ++i) {
-        try {
-            getline(mystream >> std::ws, st); 
-            obj.koef[i] = stod(st);
-        }
-        catch (const std::invalid_argument& e) {
-            cerr << "Invalid input for coefficient at index " << i << ". Please enter a number." << endl;
-            obj.koef.clear();  
-            return mystream;
-        }
-        catch (const std::out_of_range& e) {
-            cerr << "Coefficient is too large/small at index " << i << ". Please enter a smaller number." << endl;
-            obj.koef.clear(); 
-            return mystream;
-        }
+Robot::~Robot() {}
+
+string Robot::getModel() const { return model; }
+string Robot::getFunctionality() const { return functionality; }
+vector<double> Robot::getPrices() const { return prices; }
+unsigned int Robot::getRobotId() const { return robot_id; }
+
+void Robot::setModel(const string& model) { this->model = model; }
+void Robot::setFunctionality(const string& functionality) { this->functionality = functionality; }
+void Robot::setPrices(const vector<double>& prices) { this->prices = prices; }
+
+double Robot::calculateAveragePrice() const {
+    if (prices.empty()) {
+        return 0.0; // Или другое значение, сигнализирующее об отсутствии цен
     }
-     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-    return mystream;
+    return accumulate(prices.begin(), prices.end(), 0.0) / prices.size();
+}
+
+bool Robot::operator<(const Robot& other) const {
+    return calculateAveragePrice() < other.calculateAveragePrice();
+}
+
+Robot Robot::operator+(const Robot& other) const {
+    Robot result;
+    result.model = this->model + " + " + other.model;
+    result.functionality = this->functionality + " + " + other.functionality;
+
+    // Объединяем цены
+    result.prices = this->prices;
+    result.prices.insert(result.prices.end(), other.prices.begin(), other.prices.end());
+
+    return result;
+}
+
+Robot Robot::operator++(int) {
+    Robot temp = *this;
+    prices.push_back(100.0); // добавляем новую цену (пример)
+    return temp;
+}
+
+Robot& Robot::operator++() {
+    prices.push_back(100.0); // добавляем новую цену (пример)
+    return *this;
+}
+
+Robot& Robot::operator=(const Robot& other) {
+    if (this != &other) { // Проверка на самоприсваивание
+        model = other.model;
+        functionality = other.functionality;
+        prices = other.prices;
+        robot_id = next_robot_id++; // присваиваем новый ID
+    }
+    return *this;
+}
+
+ostream& operator<<(ostream& os, const Robot& robot) {
+    os << "Model: " << robot.model << endl;
+    os << "Functionality: " << robot.functionality << endl;
+    os << "Prices: ";
+    for (double price : robot.prices) {
+        os << fixed << setprecision(2) << price << " ";
+    }
+    os << endl;
+    os << "Average Price: " << fixed << setprecision(2) << robot.calculateAveragePrice() << endl;
+    os << "Robot ID: " << robot.robot_id << endl;
+    return os;
+}
+
+istream& operator>>(istream& is, Robot& robot) {
+    cout << "Enter model: ";
+    is >> ws; // Очистка буфера
+    getline(is, robot.model);
+
+    cout << "Enter functionality: ";
+    getline(is, robot.functionality);
+
+    cout << "Enter number of prices: ";
+    int numPrices;
+    is >> numPrices;
+    robot.prices.resize(numPrices);
+
+    cout << "Enter prices (separated by spaces): ";
+    for (int i = 0; i < numPrices; ++i) {
+        is >> robot.prices[i];
+    }
+    return is;
 }
